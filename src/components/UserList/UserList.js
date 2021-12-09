@@ -5,6 +5,7 @@ import CheckBox from "components/CheckBox";
 import IconButton from "@material-ui/core/IconButton";
 import FavoriteIcon from "@material-ui/icons/Favorite";
 import * as S from "./style";
+import { tmpdir } from "os";
 
 const UserList = ({ users, isLoading }) => {
   const [hoveredUserId, setHoveredUserId] = useState();
@@ -17,36 +18,89 @@ const UserList = ({ users, isLoading }) => {
     setHoveredUserId();
   };
 
+  const [filtersCountry, setFiltersCountry] = useState([]);
+  const [userLists, setUserLists] = useState([]);
+  const [favorites, setFavorites] = useState([])
+  const handleFiltersCountry = (country) => {
+    let listCountry = filtersCountry;
+    if (event.target.checked)
+      listCountry.push(country)
+    else {
+      var index = listCountry.indexOf(country);
+      if (index !== -1) {
+        listCountry.splice(index, 1);
+      }
+    }
+    setFiltersCountry(listCountry);
+    if (filtersCountry.length != 0) {
+      let tmp = [];
+      debugger;
+      filtersCountry.map((c) => {
+
+        users.map((user) => {
+          if (user.location.country == c)
+            tmp.push(user)
+        })
+      })
+      setUserLists(tmp);
+      return;
+    }
+    else
+      setUserLists(users);
+
+  }
+
+  useEffect(() => {
+    setUserLists(users);
+    if (!localStorage.getItem("favorites"))
+      localStorage.setItem("favorites", JSON.stringify([]));
+    setFavorites(JSON.parse(localStorage.getItem("favorites")));
+  }, [])
+
+
   return (
     <S.UserList>
       <S.Filters>
-        <CheckBox value="BR" label="Brazil" />
-        <CheckBox value="AU" label="Australia" />
-        <CheckBox value="CA" label="Canada" />
-        <CheckBox value="DE" label="Germany" />
+
+        <CheckBox value="BR" label="Brazil" onChange={() => { handleFiltersCountry("Brazil") }} />
+        <CheckBox value="AU" label="Australia" onChange={() => { handleFiltersCountry("Australia") }} />
+        <CheckBox value="CA" label="Canada" onChange={() => { handleFiltersCountry("Canada") }} />
+        <CheckBox value="DE" label="Germany" onChange={() => { handleFiltersCountry("Germany") }} />
+        <CheckBox value="DE" label="United Kingdom" onChange={() => { handleFiltersCountry("United Kingdom") }} />
       </S.Filters>
       <S.List>
-        {users.map((user, index) => {
+        {userLists && userLists.map((user, index) => {
           return (
             <S.User
               key={index}
               onMouseEnter={() => handleMouseEnter(index)}
               onMouseLeave={handleMouseLeave}
             >
-              <S.UserPicture src={user?.picture.large} alt="" />
+              <S.UserPicture src={user ?.picture.large} alt="" />
               <S.UserInfo>
                 <Text size="22px" bold>
-                  {user?.name.title} {user?.name.first} {user?.name.last}
+                  {user ?.name.title} {user ?.name.first} {user ?.name.last}
                 </Text>
-                <Text size="14px">{user?.email}</Text>
+                <Text size="14px">{user ?.email}</Text>
                 <Text size="14px">
-                  {user?.location.street.number} {user?.location.street.name}
+                  {user ?.location.street.number} {user ?.location.street.name}
                 </Text>
                 <Text size="14px">
-                  {user?.location.city} {user?.location.country}
+                  {user ?.location.city} {user ?.location.country}
                 </Text>
               </S.UserInfo>
-              <S.IconButtonWrapper isVisible={index === hoveredUserId}>
+              <S.IconButtonWrapper
+                isVisible={favorites &&
+                  favorites.findIndex(f => f === user.login.uuid) > -1
+                  || index === hoveredUserId}
+                onClick={() => {
+                  let favoritesList = JSON.parse(localStorage.getItem("favorites"));
+                  let i = favoritesList.indexOf(user.login.uuid);
+                  if (i == -1) favoritesList.push(user.login.uuid)
+                  else favoritesList.splice(i, 1);
+                  localStorage.setItem("favorites", JSON.stringify(favoritesList));
+                  setFavorites(favoritesList);
+                 }}>
                 <IconButton>
                   <FavoriteIcon color="error" />
                 </IconButton>
