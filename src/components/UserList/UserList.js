@@ -7,8 +7,11 @@ import FavoriteIcon from "@material-ui/icons/Favorite";
 import * as S from "./style";
 import { tmpdir } from "os";
 
-const UserList = ({ users, isLoading }) => {
+const UserList = ({ users, isLoading ,PageNumber}) => {
   const [hoveredUserId, setHoveredUserId] = useState();
+  const [filtersCountry, setFiltersCountry] = useState([]);
+  const [userList, setUserList] = useState([]);
+  const [favorites, setFavorites] = useState([])
 
   const handleMouseEnter = (index) => {
     setHoveredUserId(index);
@@ -18,9 +21,13 @@ const UserList = ({ users, isLoading }) => {
     setHoveredUserId();
   };
 
-  const [filtersCountry, setFiltersCountry] = useState([]);
-  const [userLists, setUserLists] = useState([]);
-  const [favorites, setFavorites] = useState([])
+  const handleScroll = (e) => {
+    let bottom = Math.abs(
+      e.target.scrollHeight - (e.target.scrollTop + e.target.clientHeight) <= 1
+    );
+    if (bottom) PageNumber();
+  }
+
   const handleFiltersCountry = (country) => {
     let listCountry = filtersCountry;
     if (event.target.checked)
@@ -42,16 +49,16 @@ const UserList = ({ users, isLoading }) => {
             tmp.push(user)
         })
       })
-      setUserLists(tmp);
+      setUserList(tmp);
       return;
     }
     else
-      setUserLists(users);
+      setUserList(users);
 
   }
 
   useEffect(() => {
-    setUserLists(users);
+    setUserList(users);
     if (!localStorage.getItem("favorites"))
       localStorage.setItem("favorites", JSON.stringify([]));
     setFavorites(JSON.parse(localStorage.getItem("favorites")));
@@ -68,8 +75,8 @@ const UserList = ({ users, isLoading }) => {
         <CheckBox value="DE" label="Germany" onChange={() => { handleFiltersCountry("Germany") }} />
         <CheckBox value="DE" label="United Kingdom" onChange={() => { handleFiltersCountry("United Kingdom") }} />
       </S.Filters>
-      <S.List>
-        {userLists && userLists.map((user, index) => {
+      <S.List onScroll={handleScroll}>
+        {userList && userList.map((user, index) => {
           return (
             <S.User
               key={index}
@@ -91,12 +98,12 @@ const UserList = ({ users, isLoading }) => {
               </S.UserInfo>
               <S.IconButtonWrapper
                 isVisible={favorites &&
-                  favorites.findIndex(f => f === user.login.uuid) > -1
+                  favorites.findIndex(f => f === user) > -1
                   || index === hoveredUserId}
                 onClick={() => {
                   let favoritesList = JSON.parse(localStorage.getItem("favorites"));
-                  let i = favoritesList.indexOf(user.login.uuid);
-                  if (i == -1) favoritesList.push(user.login.uuid)
+                  let i = favoritesList.indexOf(user);
+                  if (i == -1) favoritesList.push(user)
                   else favoritesList.splice(i, 1);
                   localStorage.setItem("favorites", JSON.stringify(favoritesList));
                   setFavorites(favoritesList);

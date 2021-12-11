@@ -1,26 +1,25 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import {results} from './usersArray';
 export const usePeopleFetch = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [pageNumber, setPageNumber] = useState(1);
 
+  const PageNumber = () => { setPageNumber(pageNumber + 1); };
   useEffect(() => {
-     fetchUsers();
-    const response = await axios.get(`https://randomuser.me/api/?results=25&page=1`);
-   setUsers(response.data.results);
-    
-
+    fetchUsers();
   }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, [pageNumber]);
 
   async function fetchUsers() {
-    // setIsLoading(true);
-    // const response = await axios.get(`https://randomuser.me/api/?results=25&page=1`);
-    // setIsLoading(false);
-    // setUsers(results);
-  //  setUsers(response.data.results);
+    setIsLoading(true);
+    const response = await axios.get(`https://randomuser.me/api/?results=25&page=${pageNum}`);
+    setIsLoading(false);
+    setUsers(response.data.results);
   }
 
-  return { users, isLoading, fetchUsers };
+  return { users, isLoading, fetchUsers, PageNumber};
 };
 
